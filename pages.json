@@ -1,0 +1,165 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^u-(.*)": "uview-ui/components/u-$1/u-$1.vue"
+		}
+	},
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录"
+			}
+		},
+		{
+			"path": "pages/collect/index",
+			"style": {
+				"navigationBarTitleText": "收藏"
+			}
+		},
+		{
+			"path": "pages/city/index",
+			"style": {
+				"navigationBarTitleText": "城市"
+			}
+		},
+		{
+			"path": "pages/order/index",
+			"style": {
+				"navigationBarTitleText": "订单"
+			}
+		},
+		{
+            "path" : "pages/order/info",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "订单",
+                "enablePullDownRefresh": false
+            }
+            
+        },
+		{
+			"path": "pages/account/index",
+			"style": {
+				"navigationBarTitleText": "我的主页"
+			}
+		},
+		{
+			"path": "pages/account/edit",
+			"style": {
+				"navigationBarTitleText": "我的主页编辑"
+			}
+		},
+		{
+			"path": "pages/account/reset",
+			"style": {
+				"navigationBarTitleText": "重置密码"
+			}
+		},
+		{
+			"path": "pages/special/index",
+			"style": {
+				"navigationBarTitleText": "专题"
+			}
+		},
+		{
+			"path": "pages/store/index",
+			"style": {
+				"navigationBarTitleText": "门店"
+			}
+		},
+		{
+			"path": "pages/storeMenu/index"
+		},
+		{
+			"path": "pages/productionInfo/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/shoppingCart/index",
+			"style": {
+				"navigationBarTitleText": "购物车"
+			}
+		},
+		{
+			"path": "pages/orderNow/index",
+			"style": {
+				"navigationBarTitleText": "立即订购"
+			}
+		},
+		{
+			"path": "pages/seekAdvice/index",
+			"style": {
+				"navigationBarTitleText": "1:1咨询"
+			}
+		},
+		{
+			"path": "pages/initiateConsultation/index",
+			"style": {
+				"navigationBarTitleText": "1:1咨询"
+			}
+		},
+		{
+			"path": "pages/initiateConsultationTwo/index",
+			"style": {
+				"navigationBarTitleText": "1:1咨询"
+			}
+		},
+		{
+			"path": "pages/FAQ/index",
+			"style": {
+				"navigationBarTitleText": "FAQ"
+			}
+		}
+    ],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "redtable",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8",
+		"usingComponents": {
+			"van-calendar": "/wxcomponents/@vant/weapp/calendar/index"
+		}
+	},
+	"tabBar": {
+		"borderStyle": "black",
+		"selectedColor": "#000000",
+		"color": "#444444",
+		"list": [{
+			"pagePath": "pages/index/index",
+			"iconPath": "static/tabbar/home.png",
+			"selectedIconPath": "static/tabbar/tab_home.png",
+			"text": "首页"
+		}, {
+			"pagePath": "pages/collect/index",
+			"iconPath": "static/tabbar/collect.png",
+			"selectedIconPath": "static/tabbar/tab_collect.png",
+			"text": "收藏"
+		}, {
+			"pagePath": "pages/city/index",
+			"iconPath": "static/tabbar/city.png",
+			"selectedIconPath": "static/tabbar/tab_city.png",
+			"text": "城市"
+		}, {
+			"pagePath": "pages/order/index",
+			"iconPath": "static/tabbar/order.png",
+			"selectedIconPath": "static/tabbar/tab_order.png",
+			"text": "订单"
+		}, {
+			"pagePath": "pages/account/index",
+			"iconPath": "static/tabbar/center.png",
+			"selectedIconPath": "static/tabbar/tab_center.png",
+			"text": "我的主页"
+		}]
+	},
+	"uniIdRouter": {}
+}

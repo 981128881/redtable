@@ -1,0 +1,16 @@
+export const cs = {
+  guide: '亲，我们是REDTABLE。如有任何疑问请留言，我们将尽快为您解决。',
+  type: '分类',
+  'type-order': '下单',
+  'type-pay': '支付',
+  'type-cancel': '退款/取消',
+  'type-voucher': '兑换券',
+  'type-etc': '其他',
+  date: '日期',
+  status: '状态',
+  inquire: '咨询',
+  contact: '联系方式',
+  message: '内容',
+  reply_message: '답변내용',
+  file: '上传',
+}
