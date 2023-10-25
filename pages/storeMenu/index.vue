@@ -30,7 +30,7 @@
           </div>
           <!-- <div class="sub-title">撒旦教昂克赛拉撒旦教昂克赛拉</div> -->
           <div class="price">
-            <div class="text">{{ item.price }}</div>
+            <div class="text">{{ item.price | unitConverter }}</div>
             <div class="symbol">{{ item.currency }}</div>
           </div>
         </div>
@@ -64,7 +64,7 @@
           </div>
           <!-- <div class="sub-title">撒旦教昂克赛拉撒旦教昂克赛拉</div> -->
           <div class="price">
-            <div class="text">{{ item.price }}</div>
+            <div class="text">{{ item.price | unitConverter }}</div>
             <div class="symbol">{{ item.currency }}</div>
           </div>
         </div>
@@ -100,11 +100,11 @@ export default {
         url: this.$apiHost + `/front/product`,
         data: {
           s_store_id: this.storeId,
-          // s_lang: 'zh-Hans',
-          // s_order1: 'T10.sorting',
-          // s_order2: 'desc',
-          // s_status: 'normal',
-          // limit: 100
+          s_lang: "zh-Hans",
+          s_order1: "T10.sorting", // 如何传值
+          s_order2: "desc", // 如何传值
+          s_status: "normal",
+          limit: 100,
         },
         header: {
           Authorization: "Bearer " + uni.getStorageSync("token"),
@@ -133,7 +133,11 @@ export default {
     },
 
     handleToggleWish(row) {
-      console.log(row.id, row.store_id);
+      const token = uni.getStorageSync("token");
+      if (!token) {
+        uni.navigateTo({ url: "/pages/login/index" });
+        return;
+      }
       uni.request({
         url: this.$apiHost + `/front/user/bookmark`,
         data: {
@@ -142,7 +146,7 @@ export default {
         },
         method: "post",
         header: {
-          Authorization: "Bearer " + uni.getStorageSync("token"),
+          Authorization: "Bearer " + token,
         },
         success: (res) => {
           const data = res.data;

@@ -1,60 +1,62 @@
 <template>
 	<view class="content">
 		<view class="account">
-			<image src="/static/profile.png"></image>
+			<button class="avatar-wrapper" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+				<image class="avatar" :src="avatarUrl ? avatarUrl : '/static/profile.jpg'"></image>
+			</button>
 			<view class="username">
-				<p>wechat_mini</p>
-				<span>wechat_mini@test.com</span>
+				<input type="nickname" class="weui-input" v-model="info.name" placeholder="请输入昵称" @change="saveName" />
+				<span v-if="info.email">{{info.email}}</span>
 			</view>
-			<u-button :customStyle="editStyle" @click="toEdit">Edit</u-button>
+			<!-- <u-button :customStyle="editStyle" @click="toEdit">Edit</u-button> -->
 		</view>
 		<u-line></u-line>
 		<view class="line">
 			<image src="/static/point.png"></image>
 			<p>RT点</p>
 			<view class="point-btn">
-				<u-button :customStyle="pointStyle">使用记录</u-button>
-				<u-button :customStyle="pointStyle">优惠券</u-button>
+				<view class="pointStyle" @click="toLink('/pages/credits/index')">使用记录</view>
+				<view class="pointStyle" @click="toLink('/pages/credits/exchange')">优惠券</view>
 			</view>
-			<span>123</span>
+			<span>{{info.point||0}}</span>
 		</view>
 		<u-line></u-line>
 		<!-- <view class="line">
 			<image src="/static/lang.png"></image>
 			<p>语言</p>
-		</view> -->
-		<u-line></u-line>
-		<view class="line">
+		</view>
+		<u-line></u-line> -->
+		<view class="line" @click="toLink('/pages/shoppingCart/index')">
 			<image src="/static/shopping.png"></image>
 			<p>购物车</p>
 		</view>
 		<u-line></u-line>
-		<view class="line">
+		<view class="line" @click="toLink('/pages/seekAdvice/index')">
 			<image src="/static/consult.png"></image>
 			<p>1:1咨询</p>
 		</view>
 		<u-line></u-line>
-		<view class="line">
+		<view class="line" @click="toLink('/pages/FAQ/index')">
 			<image src="/static/faq.png"></image>
 			<p>FAQ</p>
 		</view>
 		<u-line></u-line>
-		<view class="line">
+		<view class="line" @click="toLink('/pages/account/term?type=index')">
 			<image src="/static/use.png"></image>
 			<p>使用条款</p>
 		</view>
 		<u-line></u-line>
-		<view class="line">
+		<view class="line" @click="toLink('/pages/account/term?type=privacy')">
 			<image src="/static/information.png"></image>
 			<p>个人信息保护政策</p>
 		</view>
 		<u-line></u-line>
-		<view class="line">
+		<view class="line" @click="toLink('/pages/account/term?type=refund')">
 			<image src="/static/refund.png"></image>
 			<p>退款政策</p>
 		</view>
 		<u-line></u-line>
-		<view class="line">
+		<view class="line" @click="toLink('/pages/account/term?type=usage')">
 			<image src="/static/order.png"></image>
 			<p>订购及使用方法</p>
 		</view>
@@ -70,6 +72,8 @@
 	export default {
 		data() {
 			return {
+				info: [],
+				avatarUrl: '',
 				editStyle: {
 					width: '200rpx',
 					height: '76rpx',
@@ -78,18 +82,6 @@
 					borderRRadius: '4rpx',
 					border: '2rpx solid #E8E8E8',
 					fontSize: '28rpx',
-					fontWeight: '400',
-					color: '#333333',
-				},
-				pointStyle: {
-					marginRight: '16rpx',
-					padding: '10rpx 18rpx',
-					width: '152rpx',
-					height: '52rpx',
-					background: '#F3F3F3',
-					borderRadius: '0rpx',
-					border: '2rpx solid #E8E8E8',
-					fontSize: '24rpx',
 					fontWeight: '400',
 					color: '#333333',
 				},
@@ -106,14 +98,92 @@
 			}
 		},
 		onLoad() {},
-		methods: {
-			toEdit() {
+		onShow: function() {
+			if (uni.getStorageSync('token')) {
+				this.getList();
+			}else{
 				uni.navigateTo({
-					url: '/pages/account/edit'
+					url: '/pages/login/index'
+				})
+			}
+		},
+		methods: {
+			// 获取列表数据
+			getList() {
+				uni.request({
+					url: this.$apiHost + '/front/user/profile',
+					method: 'get',
+					data: {},
+					header: {
+						'Authorization': 'Bearer ' + uni.getStorageSync('token')
+					},
+					success: res => {
+						this.info = res.data.data
+						this.info.point = this.info.cash_point + this.info.b2b_point + this.info.reward_point
+						if (this.info.profile_photo_path)
+							this.avatarUrl = this.info.profile_photo_path
+					}
+				})
+			},
+			// toEdit() {
+			// 	uni.navigateTo({
+			// 		url: '/pages/account/edit'
+			// 	})
+			// },
+			toLink(url) {
+				uni.navigateTo({
+					url
 				})
 			},
 			logOut() {
 				uni.setStorageSync('token', null)
+				uni.$u.toast('登出成功')
+				this.info = []
+				this.avatarUrl = ''
+				uni.switchTab({
+					url: '/pages/index/index'
+				})
+			},
+			saveInfo(param) {
+				var url = this.$apiHost + '/wechat/login'
+				uni.login({
+					"provider": "weixin",
+					"onlyAuthorize": true,
+					success: function(event) {
+						const {
+							code
+						} = event
+						uni.request({
+							url: url,
+							data: {
+								...param,
+								code: event.code
+							},
+							success: (res) => {
+								// 保存token
+								uni.setStorageSync('token', res.data.rt_api_key)
+							}
+						});
+					},
+					fail: function(err) {
+						console.log('err', err)
+						// 登录授权失败  
+						// err.code是错误码
+					}
+				})
+			},
+			onChooseAvatar(e) {
+				// 转成base64
+				this.avatarUrl = 'data:image/jpeg;base64,' + wx.getFileSystemManager().readFileSync(e.detail.avatarUrl,
+					'base64')
+				this.saveInfo({
+					avatarUrl: e.detail.avatarUrl
+				})
+			},
+			saveName(e) {
+				this.saveInfo({
+					nickname: e.detail.value
+				})
 			},
 		}
 	}
@@ -123,12 +193,26 @@
 	.account {
 		display: flex;
 		margin: 28rpx 32rpx;
+
+		.avatar-wrapper {
+			margin-right: 16rpx;
+			padding: 0;
+			width: 80rpx !important;
+			height: 80rpx !important;
+			border-radius: 0;
+		}
+
+		.avatar {
+			display: block;
+			width: 80rpx;
+			height: 80rpx;
+		}
 	}
 
-	.account image {
-		width: 72rpx;
-		height: 72rpx;
-		margin-right: 16rpx;
+	.username {
+		width: 600rpx;
+		// overflow: hidden;
+		overflow-wrap: normal;
 	}
 
 	.username p {
@@ -170,5 +254,19 @@
 
 	.point-btn {
 		display: flex;
+	}
+
+	.pointStyle {
+		margin-right: 16rpx;
+		padding: 10rpx 18rpx;
+		width: 132rpx;
+		line-height: normal;
+		text-align: center;
+		background: #F3F3F3;
+		// border-radius: 0rpx;
+		border: 2rpx solid #E8E8E8;
+		font-size: 24rpx;
+		font-weight: 400;
+		color: #333333;
 	}
 </style>

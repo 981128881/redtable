@@ -6,7 +6,12 @@
     <ul class="subsection">
       <li v-for="item in list" :key="item" class="active">{{ item }}</li>
     </ul>
-    <ul class="subsection-list" v-for="item in seekList" :key="item.id">
+    <ul
+      class="subsection-list"
+      v-for="item in seekList"
+      :key="item.id"
+      @click="handleInfo(item.id)"
+    >
       <li>{{ item.type }}</li>
       <li>{{ item.created_at_utc.slice(0, 10) }}</li>
       <li>{{ item.status }}</li>
@@ -32,7 +37,7 @@ export default {
       seekList: [],
     };
   },
-  onLoad() {
+  onShow() {
     this.getSeekList();
   },
   methods: {
@@ -52,6 +57,9 @@ export default {
       uni.redirectTo({
         url: "/pages/initiateConsultation/index",
       });
+    },
+    handleInfo(id) {
+      uni.navigateTo({ url: `/pages/initiateConsultationTwo/index?id=${id}` });
     },
   },
 };

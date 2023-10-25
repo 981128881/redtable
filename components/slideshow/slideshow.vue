@@ -64,7 +64,7 @@
 							borderRadius: $u.addUnit(radius),
 							marginLeft: '1px'
 						}"
-						@click="toUrl(item)"
+						@click="toUrl(list[index+1])"
 					></image>
 				</view>
 			</swiper-item>

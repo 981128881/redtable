@@ -14,4 +14,15 @@ export default {
 
 <style lang="scss">
 // @import "-ui/index.scss";
+/* 解决小程序和app滚动条的问题 */
+/* #ifdef MP-WEIXIN || APP-PLUS */
+::-webkit-scrollbar {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none;
+  background: transparent;
+  color: transparent;
+}
+/* #endif */
 </style>

@@ -1,16 +1,35 @@
 <template>
-  <div>
-    <div class="shop-name">{{ store.translate_name }}</div>
-    <div class="campaign">宣传活动</div>
-    <div class="campaign-info">
-      <u-image width="140rpx" height="120rpx" :src="productImageUrl"></u-image>
-      <div class="right">
-        <div class="top">Reboot Myeongdong</div>
-        <div class="bottom">10% 할인 (최대 10,000원 할인)</div>
-      </div>
-    </div>
-    <div class="customer">{{ orderjs.customer_info }}</div>
-    <div class="customer-info">
+  <view>
+    <view class="shop-name">{{ store.translate_name }}</view>
+    <template v-if="promotions.length">
+      <view class="campaign">宣传活动</view>
+      <view
+        v-for="(item, index) in promotions"
+        :key="item.promotion_id"
+        :class="[item.checked ? 'active' : '', 'campaign-info']"
+        @click="handleCheckActiveProduction(index)"
+      >
+        <u-image
+          width="140rpx"
+          height="120rpx"
+          :src="item.promotion_file_path"
+        ></u-image>
+        <view class="right">
+          <view class="top">{{ item.translate_name }}</view>
+          <view class="bottom">
+            优惠{{ item.max_discount_rate * 100 }}%
+            <template v-if="item.max_discount_price"
+              >(最多打{{
+                (item.max_discount_rate * item.max_discount_price)
+                  | unitConverter
+              }}折扣)</template
+            >
+          </view>
+        </view>
+      </view>
+    </template>
+    <view class="customer">{{ orderjs.customer_info }}</view>
+    <view class="customer-info">
       <u--form
         labelPosition="left"
         :model="userInfo"
@@ -44,9 +63,9 @@
             border="none"
             customStyle="padding: 8rpx; background: #F8F8F8; border: 2rpx solid #E8E8E8;"
           ></u--input>
-          <div class="tips">
+          <view class="tips">
             {{ orderjs.agree_phone_msg }}
-          </div>
+          </view>
         </u-form-item>
         <u-form-item
           :label="orderjs.order_email"
@@ -60,15 +79,15 @@
             border="none"
             customStyle="padding: 8rpx; background: #F8F8F8; border: 2rpx solid #E8E8E8;"
           ></u--input>
-          <div class="tips">
+          <view class="tips">
             {{ orderjs.order_email_check }}
-          </div>
+          </view>
         </u-form-item>
       </u--form>
-    </div>
+    </view>
 
-    <div class="customer">{{ orderjs.visiting_info }}</div>
-    <div class="customer-info">
+    <view class="customer">{{ orderjs.visiting_info }}</view>
+    <view class="customer-info">
       <u--form
         labelPosition="left"
         :model="userInfo"
@@ -77,21 +96,20 @@
       >
         <u-form-item
           :label="orderjs.order_date"
-          prop="name"
+          prop="day"
           labelWidth="200rpx"
-          ref="userInfo.name"
+          ref="userInfo.day"
         >
-          <div @click="handleShowTime">
+          <view @click="handleShowTime">
             <u--input
-              type="number"
+              disabled
               placeholderClass="c-input-placeholder"
               :placeholder="orderjs_order_date_select"
-              :value="userInfo.day"
+              v-model="userInfo.day"
               border="none"
-              disabled
               customStyle="padding: 8rpx; background: #F8F8F8; border: 2rpx solid #E8E8E8;"
             ></u--input>
-          </div>
+          </view>
         </u-form-item>
         <u-form-item
           :label="orderjs.order_time"
@@ -99,9 +117,10 @@
           labelWidth="200rpx"
           ref="userInfo.time"
         >
-          <div style="display: flex; justify-content: space-between">
-            <div style="width: 45%" @click="handleShowDateTime">
+          <view style="display: flex; justify-content: space-between">
+            <view style="width: 45%" @click="handleShowDateTime">
               <u--input
+                disabled
                 type="number"
                 placeholderClass="c-input-placeholder"
                 v-model="userInfo.time[0]"
@@ -109,9 +128,10 @@
                 suffixIcon="arrow-down"
                 customStyle="padding: 8rpx; background: #F8F8F8; border: 2rpx solid #E8E8E8;"
               ></u--input>
-            </div>
-            <div style="width: 45%" @click="handleShowDateTime">
+            </view>
+            <view style="width: 45%" @click="handleShowDateTime">
               <u--input
+                disabled
                 type="number"
                 placeholderClass="c-input-placeholder"
                 v-model="userInfo.time[1]"
@@ -119,8 +139,8 @@
                 suffixIcon="arrow-down"
                 customStyle="padding: 8rpx; background: #F8F8F8; border: 2rpx solid #E8E8E8;"
               ></u--input>
-            </div>
-          </div>
+            </view>
+          </view>
         </u-form-item>
         <u-form-item
           :label="orderjs.order_number_visitor"
@@ -129,6 +149,7 @@
           ref="userInfo.number"
         >
           <u--input
+            type="number"
             placeholderClass="c-input-placeholder"
             v-model="userInfo.number"
             border="none"
@@ -150,70 +171,87 @@
           ></u--textarea>
         </u-form-item>
       </u--form>
-    </div>
-    <div class="customer">REDTABLE POINT:{{ residuePoint }}</div>
-    <div class="point-info">
-      <div>사용가능한 포인트는0P입니다.</div>
-      <div>사용할 포인트는0P입니다.{{ userInfo.point }}</div>
-      <div class="btn">
-        <div style="width: 470rpx">
+    </view>
+    <view class="customer">REDTABLE POINT:{{ residuePoint }}</view>
+    <view class="point-info">
+      <view>사용가능한 포인트는0P입니다.</view>
+      <view>사용할 포인트는0P입니다.{{ userInfo.point || 0 }}</view>
+      <view class="btn">
+        <view style="width: 470rpx">
           <u--input
             ref="onInputNumberVal"
             type="number"
             customStyle=" background: #F8F8F8; border: 2rpx solid #E8E8E8;"
             border="surround"
-            :value="userInfo.point"
-            :formatter="formatterInput"
-          ></u--input>
-        </div>
+            v-model="userInfo.point"
+            @input="formatterInput"
+          />
+        </view>
         <u-button
           color="#FF4A52"
           text="Point사용"
           :customStyle="{ width: '200rpx' }"
           @click="consumeAllPoint"
         ></u-button>
-      </div>
-    </div>
+      </view>
+    </view>
 
-    <div class="settlement">
-      <div class="header">
-        <div>预计结算金额</div>
-        <div>
+    <view class="settlement">
+      <view class="header">
+        <view>预计结算金额</view>
+        <view>
           <span style="font-size: 32rpx">{{ paymentAmount }}</span>
           <span style="margin-left: 10rpx">KRW</span>
-        </div>
-      </div>
-      <div class="item">
-        <div>订购金额</div>
-        <div>
-          <span style="font-size: 28rpx">{{ total.total_price * 1 }}</span>
+        </view>
+      </view>
+      <view class="item">
+        <view>订购金额</view>
+        <view>
+          <span style="font-size: 28rpx">{{
+            (total.total_price * 1 + promotionalPrice * 1) | unitConverter
+          }}</span>
           <span style="margin-left: 10rpx">KRW</span>
-        </div>
-      </div>
-      <div class="item" style="color: #ff4a52">
-        <div>使用积分</div>
-        <div>
+        </view>
+      </view>
+      <view class="item" style="color: #ff4a52">
+        <view>使用积分</view>
+        <view>
           <span style="font-size: 28rpx">{{ userInfo.point || 0 }}</span
           ><span style="margin-left: 10rpx">KRW</span>
-        </div>
-      </div>
-    </div>
-
-    <u-button
-      color="#FF4A52"
-      custom-style="width: 690rpx; margin: 30rpx auto;"
-      @click="handleSubmit"
-      >{{ paymentAmount }} KRW 支付</u-button
+        </view>
+      </view>
+    </view>
+    <view
+      style="
+        background: #fff;
+        padding: 30rpx;
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        z-index: 99;
+      "
     >
+      <u-button
+        :disabled="disabled"
+        color="#FF4A52"
+        custom-style="width: 690rpx"
+        @click="handleSubmit"
+        >{{ paymentAmount }} KRW 支付</u-button
+      >
+    </view>
+
     <van-calendar
       v-if="show"
       :show="showCalendar"
       @confirm="onCalendarConfirm"
       @close="onCalendarClose"
+      :min-date="minDate"
+      :max-date="maxDate"
       :formatter="formatter"
       color="#FF4A52"
     />
-
+    <!-- :min-date="minDate"
+      :max-date="maxDate" -->
     <u-picker
       ref="uPicker"
       v-if="showDateTime"
@@ -227,11 +265,12 @@
     ></u-picker>
 
     <u-toast ref="uToast"></u-toast>
-  </div>
+  </view>
 </template>
 
 <script>
 import qs from "qs";
+const moment = require("../../utils/moment.min.js");
 import { order as orderjs } from "../../zh-Hans/order";
 var SECKEY = "8974934DE4E0047AECCFF472BC735AC8";
 function SHA256(s) {
@@ -462,14 +501,14 @@ export default {
     return {
       orderjs,
       userInfo: {
-        name: "11",
-        phone: "13112345678",
-        email: "11@qq.com",
-        day: "2023-07-10",
-        time: ["12", "14"],
+        name: "",
+        phone: "",
+        email: "",
+        day: "",
+        time: [],
         point: "",
-        notes: "121",
-        number: "1",
+        notes: "",
+        number: "",
       },
       allPoint: 0, // 积分
       rules: {
@@ -509,25 +548,21 @@ export default {
           trigger: ["blur", "change"],
         },
         day: {
-          type: "date",
+          type: "string",
           required: true,
           message: "请填写订购日期",
-          trigger: ["blur", "change"],
+          trigger: ["change", "blur"],
         },
         time: {
           required: true,
-          validator: (rule, value, callback) => {
-            setTimeout(() => {
-              console.log(value);
-              const { time } = this.userInfo;
-              console.log(time);
-              if (!time[0] && !time[1]) {
-                callback(new Error("请填写预订时间"));
-              }
-              callback();
-            }, 100);
+          validator: async (rule, value, callback) => {
+            const { time } = this.userInfo;
+            if (time.length === 0) {
+              callback(new Error("请填写预订时间"));
+            }
+            callback();
           },
-          trigger: ["change", "blur"],
+          trigger: ["blur", "change"],
         },
       },
       showCalendar: false,
@@ -539,6 +574,11 @@ export default {
       columns: [],
       columnData: [],
       total: {},
+      promotions: [], // 促销活动
+      promotionalPrice: 0,
+      minDate: new Date().getTime(),
+      maxDate: new Date().getTime(),
+      disabled: false,
     };
   },
 
@@ -547,130 +587,168 @@ export default {
     this.getShopCar();
     this.getPoint();
   },
-  async onReady() {
+  onReady() {
     //如果需要兼容微信小程序，并且校验规则中含有方法等，只能通过setRules方法设置规则。
     this.$refs.uForm.setRules(this.rules);
+    this.$refs.uForm1.setRules(this.rules);
   },
   methods: {
+    onValidate() {
+      this.$refs.uForm1.validate();
+    },
+
     handleSubmit() {
       this.$refs.uForm.validate().then(() => {
-        this.$refs.uForm.validate().then(() => {
-          const { name, phone, email, day, time, notes, number, point } =
-            this.userInfo;
-          const HH = time[0] < 10 ? "0" + time[0] : time[0];
-          const mm = time[1] < 10 ? "0" + time[1] : time[1];
-
-          uni.request({
-            url: this.$apiHost + `/front/order`,
-            method: "POST",
-            header: {
-              Authorization: "Bearer " + uni.getStorageSync("token"),
-            },
-            data: {
-              name,
-              email,
-              phone,
-              order_type: "general",
-              payment_gateway: "wechatpay",
-              reserve_day: day,
-              reserve_date: `${HH}:${mm}`,
-              memo: notes,
-              person: number || 0,
-              order_lang: "zh-Hans",
-              card_price: this.paymentAmount,
-              kcp_price: 0,
-              barogage_price: 0,
-              redtable_price: point || 0,
-              promotion_price: 0,
-              eqtype: "N",
-              restype: "JSON",
-            },
-            success: (res) => {
-              const resp = res.data;
-
-              let data = {
-                ver: 100,
-                mid: "P12000000146",
-                servicetype: "S001",
-                reqtype: "N",
-                statusurl: "https://redtable.global/order/icb/wechatpay/status",
-                returnurl: "http://localhost:3000/api/icb/return",
-                refer_url: "https://redtable.global",
-                restype: "JSON",
-                mname: "redtable",
-                trade_information: JSON.stringify({
-                  goods_detail: [
-                    {
-                      wxpay_goods_id: "5331",
-                      goods_name: resp.data.title,
-                      quantity: 1,
-                    },
-                  ],
-                }),
-                refno: resp.data.order_no,
-                reqcur: "KRW",
-                reqamt: resp.order_pay.price,
-                buyername: resp.data.name,
-                product: resp.data.title,
-                tel: resp.data.phone,
-                email: resp.data.email,
-                param1: "ov3xI5HmaGzqyaGawQWwItZBgAao",
-                param2: "Bearer " + uni.getStorageSync("token"),
-              };
-
-              console.log(getKey(decodeURIComponent(qs.stringify(data))));
-
+        this.$refs.uForm1.validate().then(() => {
+          this.disabled = true;
+          uni.showLoading({
+            title: "加载中...",
+          });
+          uni.login({
+            provider: "weixin",
+            onlyAuthorize: true, // 微信登录仅请求授权认证
+            success: (event) => {
+              //客户端成功获取授权临时票据（code）,向业务服务器发起登录请求。
               uni.request({
-                url: "https://online.funpay.co.kr/payment/payment.icb",
+                url: this.$apiHost + "/wechat/login",
                 data: {
-                  ...data,
-                  fgkey: getKey(decodeURIComponent(qs.stringify(data))),
+                  code: event.code,
                 },
-                header: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-                method: "POST",
-                success: (res) => {
-                  let data = JSON.parse(decodeURIComponent(res.data.resmsg));
-                  wx.requestPayment({
-                    appId: data.appId,
-                    timeStamp: data.timeStamp,
-                    nonceStr: data.nonceStr,
-                    package: data.package,
-                    signType: data.signType,
-                    paySign: data.paySign,
-                    success: function (res) {},
-                    fail: function (res) {},
-                    complete: function (res) {},
+                success: (tokenRes) => {
+                  // 保存token
+                  uni.setStorageSync("token", tokenRes.data.rt_api_key);
+                  const {
+                    name,
+                    phone,
+                    email,
+                    day,
+                    time,
+                    notes,
+                    number,
+                    point,
+                  } = this.userInfo;
+                  const HH = time[0] < 10 ? "0" + time[0] : time[0];
+                  const mm = time[1] < 10 ? "0" + time[1] : time[1];
+                  uni.request({
+                    url: this.$apiHost + `/front/order`,
+                    method: "POST",
+                    header: {
+                      Authorization: "Bearer " + uni.getStorageSync("token"),
+                    },
+                    data: {
+                      name,
+                      email,
+                      phone,
+                      order_type: "general",
+                      payment_gateway: "wechatpay",
+                      reserve_day: day,
+                      reserve_date: `${HH}:${mm}`,
+                      memo: notes,
+                      person: number || 0,
+                      order_lang: "zh-Hans",
+                      card_price: this.paymentAmount,
+                      kcp_price: 0,
+                      barogage_price: 0,
+                      redtable_price: point || 0,
+                      promotion_price: 0,
+                      eqtype: "N",
+                      restype: "JSON",
+                    },
+                    success: (res) => {
+                      const resp = res.data;
+                      let data = {
+                        ver: 100,
+                        mid: "P12000000146",
+                        servicetype: "S001",
+                        reqtype: "N",
+                        statusurl:
+                          "https://redtable.global/order/icb/wechatpay/status",
+                        returnurl: "http://localhost:3000/api/icb/return",
+                        refer_url: "https://redtable.global",
+                        restype: "JSON",
+                        mname: "redtable",
+                        trade_information: JSON.stringify({
+                          goods_detail: [
+                            {
+                              wxpay_goods_id: "5331",
+                              goods_name: resp.data.title,
+                              quantity: 1,
+                            },
+                          ],
+                        }),
+                        refno: resp.data.order_no,
+                        reqcur: "KRW",
+                        reqamt: resp.order_pay.price,
+                        buyername: resp.data.name,
+                        product: resp.data.title,
+                        tel: resp.data.phone,
+                        email: resp.data.email,
+                        param1: tokenRes.data.openid,
+                        param2: "Bearer " + uni.getStorageSync("token"),
+                      };
+                      // 调用ICB接口
+                      uni.request({
+                        url: "https://online.funpay.co.kr/payment/payment.icb",
+                        data: {
+                          ...data,
+                          fgkey: getKey(decodeURIComponent(qs.stringify(data))),
+                        },
+                        header: {
+                          "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        method: "POST",
+                        success: (res) => {
+                          uni.hideLoading();
+                          let data = JSON.parse(
+                            decodeURIComponent(res.data.resmsg)
+                          );
+                          // 发起weixin支付
+                          wx.requestPayment({
+                            appId: data.appId,
+                            timeStamp: data.timeStamp,
+                            nonceStr: data.nonceStr,
+                            package: data.package,
+                            signType: data.signType,
+                            paySign: data.paySign,
+                            success: (res) => {
+                              uni.showToast({
+                                title: "支付成功",
+                                icon: "success",
+                                mask: true,
+                              });
+                              setTimeout(() => {
+                                uni.switchTab({ url: "/pages/order/index" });
+                              }, 1500);
+                            },
+                            fail: (res) => {
+                              uni.showModal({
+                                title: "提示",
+                                content: "支付失败，请稍后重试！",
+                                showCancel: false,
+                              });
+                            },
+                            complete: (res) => {
+                              this.disabled = true;
+                            },
+                          });
+                        },
+                        fail: (err) => {
+                          uni.showModal({
+                            title: "提示",
+                            content: "支付失败，请稍后重试！",
+                            showCancel: false,
+                          });
+                        },
+                      });
+                    },
                   });
-
-                  console.log(data);
-                  console.log(decodeURIComponent(data));
                 },
               });
-
-              //   if (res.data.order_pay.price == 0) {
-              //   } else {
-              //     wx.requestPayment({
-              //       // 这一步是调起微信支付
-              //       appId: res1.appId,
-              //       timeStamp: res1.timeStamp,
-              //       nonceStr: res1.nonceStr,
-              //       package: res1.package,
-              //       signType: res1.signType,
-              //       paySign: res1.paySign,
-              //       success: function (res) {
-              //         wx.hideLoading({});
-              //         app.ShowToast("充值成功");
-              //       },
-              //       fail: function (res) {
-              //         app.ShowToast("支付失败");
-              //       },
-              //       complete: function (res) {
-              //         app.ShowToast("取消支付");
-              //       },
-              //     });
-              //   }
+            },
+            fail: function (err) {
+              console.log("err", err);
+              // 登录授权失败
+              // err.code是错误码
             },
           });
         });
@@ -708,17 +786,25 @@ export default {
       }
       return day;
     },
+
     // 获得可选择的日期
     getCalendar() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month =
+        d.getMonth() + 1 < 10 ? "0" + (d.getMonth() + 1) : d.getMonth() + 1;
+      const date = d.getDate() < 10 ? "0" + d.getDate() : d.getDate();
+
+      const day = this.userInfo.day || year + "-" + month + "-" + date;
+
       uni.request({
         url:
-          this.$apiHost +
-          `/front/store/${this.store.id}/business-day/${this.userInfo.day}`,
+          this.$apiHost + `/front/store/${this.store.id}/business-day/${day}`,
         method: "get",
         header: {
           Authorization: "Bearer " + uni.getStorageSync("token"),
         },
-        success: async (res) => {
+        success: (res) => {
           this.customList = res.data.data;
           this.show = true;
         },
@@ -756,22 +842,78 @@ export default {
         success: (res) => {
           if (res.data.status == "success") {
             this.total = res.data.data;
+
+            // 活动商品
+            let promotions = JSON.parse(
+              JSON.stringify(res.data.data.promotions)
+            );
+            promotions.forEach((item) => {
+              item.checked = false;
+            });
+            this.promotions = promotions;
+
+            // 最小、最大可选择日期
+            const min = this.total.store_contract.reserve_after_days;
+            const max = this.total.store_contract.reserve_max_days;
+            this.minDate = new Date(
+              moment().add(min, "days").format("YYYY-MM-DD")
+            ).getTime();
+            this.maxDate = new Date(
+              moment().add(max, "days").format("YYYY-MM-DD")
+            ).getTime();
+
+            console.log(this.minDate);
+            console.log(this.maxDate);
+
             const { store_bisuness_time } = res.data.data;
-            const { columns: columns1, columnData: columnData1 } =
-              this.generateColumnsAndColumnData(
-                store_bisuness_time[0].open,
-                store_bisuness_time[0].break_start
-              );
-            const { columns: columns2, columnData: columnData2 } =
-              this.generateColumnsAndColumnData(
-                store_bisuness_time[0].break_end,
-                store_bisuness_time[0].close
-              );
-            this.columns = [[...columns1, ...columns2], columnData1[0]];
-            this.columnData = [...columnData1, ...columnData2];
+            if (store_bisuness_time.length) {
+              // 如果不中午休息
+              if (!store_bisuness_time[0].break_start) {
+                const { columns: columns1, columnData: columnData1 } =
+                  this.generateColumnsAndColumnData(
+                    store_bisuness_time[0].open,
+                    store_bisuness_time[0].close
+                  );
+                this.columns = [columns1, columnData1[0]];
+                this.columnData = columnData1;
+              } else {
+                const { columns: columns1, columnData: columnData1 } =
+                  this.generateColumnsAndColumnData(
+                    store_bisuness_time[0].open,
+                    store_bisuness_time[0].break_start
+                  );
+                const { columns: columns2, columnData: columnData2 } =
+                  this.generateColumnsAndColumnData(
+                    store_bisuness_time[0].break_end,
+                    store_bisuness_time[0].close
+                  );
+                this.columns = [[...columns1, ...columns2], columnData1[0]];
+                this.columnData = [...columnData1, ...columnData2];
+              }
+            }
           }
         },
       });
+    },
+
+    // 选中活动中的商品
+    handleCheckActiveProduction(index) {
+      this.$set(
+        this.promotions[index],
+        "checked",
+        !this.promotions[index].checked
+      );
+      const checkActiveProductions = this.promotions.filter(
+        (item) => item.checked
+      );
+      if (checkActiveProductions.length !== 0) {
+        const total = checkActiveProductions.reduce((a, b) => {
+          return a + b.max_discount_price * (1 - b.max_discount_rate);
+        }, 0);
+        this.promotionalPrice = total;
+        return;
+      }
+      this.promotionalPrice = 0;
     },
 
     changeHandler(e) {
@@ -808,23 +950,37 @@ export default {
 
     // 使用所有积分
     consumeAllPoint() {
-      if (this.allPoint > this.total.total_price) {
-        this.userInfo.point = this.total.total_price * 1;
+      if (this.allPoint > this.total.total_price * 1 + this.promotionalPrice) {
+        this.userInfo.point =
+          this.total.total_price * 1 + this.promotionalPrice;
       } else {
         this.userInfo.point = this.allPoint;
       }
     },
 
     formatterInput(val) {
-      const pages = getCurrentPages();
-      const currentPage = pages[pages.length - 1];
-
-      if (val < 0) {
-        return 0;
+      // 不能以0开头
+      if (val == 0) {
+        console.log(11111);
+        this.userInfo.point = "";
       }
 
-      if (val * 1 > Number(currentPage.data.total.total_price)) {
-        return Number(currentPage.data.total.total_price);
+      // 1. 不得少于0积分。
+      if (val < 0) {
+        this.userInfo.point = "";
+        return;
+      }
+
+      // 2. 不得多于初始积分
+      if (val > this.allPoint) {
+        this.userInfo.point = "";
+        return;
+      }
+
+      // 3. 不得多于总商品价格
+      if (val > Number(this.total.total_price * 1 + this.promotionalPrice)) {
+        this.userInfo.point = "";
+        return;
       }
     },
 
@@ -834,6 +990,7 @@ export default {
     onCalendarConfirm(event) {
       this.userInfo.day = this.formatDate(event.detail);
       this.showCalendar = false;
+      this.onValidate();
     },
     formatDate(date) {
       date = new Date(date);
@@ -861,9 +1018,11 @@ export default {
       this.$set(this.userInfo.time, 1, value[1]);
       this.showDateTime = false;
       this.defaultIndex = indexs;
+      this.onValidate();
     },
     onTimeClose() {
       this.showDateTime = false;
+      this.onValidate();
     },
     generateColumnsAndColumnData(startTime, endTime) {
       let columns = [],
@@ -876,7 +1035,7 @@ export default {
         columns.push(i);
       }
       for (let i = columns[0]; i <= columns[columns.length - 1]; i++) {
-        let startMinute = 10,
+        let startMinute = 0,
           endMinute = 50;
         if (i === columns[0]) startMinute = Number(startTime.slice(3));
         if (i === columns[columns.length - 1])
@@ -884,7 +1043,11 @@ export default {
 
         let arr = [];
         for (let i = startMinute; i <= endMinute; i += 10) {
-          arr.push(i);
+          if (i == 0) {
+            arr.push(i + "0");
+          } else {
+            arr.push(i);
+          }
         }
         columnData.push(arr);
       }
@@ -895,12 +1058,15 @@ export default {
   computed: {
     // 剩余积分
     residuePoint() {
-      return this.allPoint - (this.userInfo.point || 0);
+      return this.allPoint - this.userInfo.point;
     },
     // 支付金额
     paymentAmount() {
-      console.log(this.total);
-      return this.total.total_price - (this.userInfo.point || 0);
+      return (
+        this.total.total_price -
+        (this.userInfo.point || 0) +
+        this.promotionalPrice
+      );
     },
   },
 };
@@ -930,13 +1096,17 @@ export default {
 }
 
 .campaign-info {
+  width: 746rpx;
   display: flex;
   padding: 24rpx 32rpx;
-  box-sizing: border-box;
+  // box-sizing: border-box;
   width: 750rpx;
   height: 166rpx;
-  background: rgba(255, 74, 82, 0.05);
-  border: 2rpx solid rgba(255, 74, 82, 0.2);
+  margin: auto;
+  &.active {
+    background: rgba(255, 74, 82, 0.05);
+    border: 2rpx solid rgba(255, 74, 82, 0.2);
+  }
 
   .right {
     width: 514rpx;
@@ -1006,7 +1176,7 @@ export default {
 
 .settlement {
   width: 690rpx;
-  margin: auto;
+  margin: 0 auto 160rpx;
   border: 1px solid #ccc;
   padding: 0 20rpx;
   box-sizing: border-box;

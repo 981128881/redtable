@@ -17,18 +17,21 @@
 		</view> -->
 		<u-line></u-line>
 		<!-- 横向滑动 -->
-		<view style="margin: 0 32rpx;">
+		<view style="margin: 0 32rpx">
 			<u-row>
-				<view style="margin-top: 32rpx;width: 720rpx;">
+				<view style="margin-top: 32rpx; width: 720rpx">
 					<u-scroll-list :indicator="false" class="swipe swipe-photo">
 						<view v-for="(item, index) in bannerList" :key="index" @click="toSpecial(item)">
 							<view class="swpierBox">
 								<view class="swpierBox-view-photo">
-									<image :src="item.imgUrl"></image>
-									<!-- <view class="swpierBox-card">
-										<p class="place">{{item.name}}</p>
-										<p class="amount">{{item.count}}个店铺</p>
-									</view> -->
+									<image :src="item.imgUrl" mode="aspectFill"></image>
+									<view class="swpierBox-card">
+										<p class="place">{{ item.name }}</p>
+										<p class="amount">{{ item.count | unitConverter }}个店铺</p>
+									</view>
+									<view class="checked" v-if="item.id == option.s_must_eat_id">
+										<u-icon name="checkmark" color="#FFFFFF" size="40rpx"></u-icon>
+									</view>
 								</view>
 							</view>
 						</view>
@@ -38,82 +41,88 @@
 		</view>
 		<view class="option">
 			<u-grid :border="true" col="4" @click="click">
-				<griditem v-for="(item,index) in tabList" :key="index" :checkedStyle="item.checkedStyle"
+				<griditem v-for="(item, index) in tabList" :key="index" :checkedStyle="item.checkedStyle"
 					@click="changeLoca(item)">
 					<!-- <span class="grid-text">{{item.title}}</span> -->
-					{{item.translate_name2}}
+					{{ item.translate_name2 }}
 				</griditem>
 			</u-grid>
 		</view>
-		<h2 class="h2">共{{total}}个店铺</h2>
+		<h2 class="h2">共{{ total | unitConverter }}个店铺</h2>
 		<h2 class="h2">人气推荐</h2>
 		<view>
-			<u-list @scrolltolower="scrolltolower" height="1200rpx" :preLoadScreen="page * 4">
-				<u-list-item v-for="(item, index) in storeList" :key="index">
-					<view class="card">
-						<image :src="item.imgUrl"></image>
+				<u-row v-for="(item, index) in storeList" :key="index">
+					<view class="card" @click="toStore(item)">
+						<image :src="item.imgUrl" mode="aspectFill"></image>
 						<view class="introduction">
-							<span class="area">{{item.region}}</span>
-							<h3 class="h3">{{item.storeName}}</h3>
+							<span class="area">{{ item.region }}</span>
+							<h3 class="h3">{{ item.storeName }}</h3>
 							<view class="star">
 								<u-icon name="star-fill" color="#FF4A52" size="36rpx"></u-icon>
-								<span class="score">{{item.score}}({{item.count}})</span>
+								<span class="score">
+									{{ item.score || "0.0" }}({{ item.count | unitConverter }})
+								</span>
 							</view>
-							<span class="food">{{item.menu}}</span>
+							<span class="food">{{ item.menu }}</span>
 							<!-- <span class="food-info"></span> -->
 							<h3 class="price">
-								{{item.price}}
+								{{ item.price | unitConverter }}
 								<!-- <span>KRW</span> -->
 							</h3>
 						</view>
 						<view class="order">
 							<image :src="'/static/buynow_ico.png'"></image>
 						</view>
-						<view class="heart">
-							<u-icon name="heart" color="#FFFFFF" size="40rpx"></u-icon>
+						<view class="heart" @click="collect(item, index, 'store')">
+							<u-icon name="heart" color="#FFFFFF" size="40rpx"
+								v-if="item.is_store_bookmarked == 0"></u-icon>
+							<u-icon name="heart-fill" color="#FF4A52" size="40rpx"
+								v-if="item.is_store_bookmarked == 1"></u-icon>
 						</view>
 					</view>
-				</u-list-item>
-			</u-list>
+				</u-row>
 		</view>
 		<view v-if="allList.length > 0">
 			<h2 class="h2">全部</h2>
 			<view>
-				<u-list @scrolltolower="scrolltolower" height="1200rpx" :preLoadScreen="page * 4">
-					<u-list-item v-for="(item, index) in allList" :key="index">
-						<view class="card">
-							<image :src="item.imgUrl"></image>
+					<u-row v-for="(item, index) in allList" :key="index">
+						<view class="card" @click="toStore(item)">
+							<image :src="item.imgUrl" mode="aspectFill"></image>
 							<view class="introduction">
-								<span class="area">{{item.region}}</span>
-								<h3 class="h3">{{item.storeName}}</h3>
+								<span class="area">{{ item.region }}</span>
+								<h3 class="h3">{{ item.storeName }}</h3>
 								<view class="star">
 									<u-icon name="star-fill" color="#FF4A52" size="36rpx"></u-icon>
-									<span class="score">{{item.score}}({{item.count}})</span>
+									<span class="score">{{ item.score }} <template v-if="item.count">(</template>
+										{{ item.count | unitConverter
+                    }}<template v-if="item.count">)</template></span>
 								</view>
-								<span class="food">{{item.menu}}</span>
+								<span class="food">{{ item.menu }}</span>
 								<h3 class="price">
-									{{item.price}}
+									{{ item.price }}
 								</h3>
 							</view>
 							<view class="order">
 								<image :src="'/static/buynow_ico.png'"></image>
 							</view>
-							<view class="heart">
-								<u-icon name="heart" color="#FFFFFF" size="40rpx"></u-icon>
+							<view class="heart" @click.stop="collect(item, index, 'product')">
+								<u-icon name="heart" color="#FFFFFF" size="40rpx"
+									v-if="item.is_store_bookmarked == 0"></u-icon>
+								<u-icon name="heart-fill" color="#FF4A52" size="40rpx"
+									v-if="item.is_store_bookmarked == 1"></u-icon>
 							</view>
 						</view>
-					</u-list-item>
-				</u-list>
+					</u-row>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	import griditem from "../../components/griditem/griditem.vue"
+	import griditem from "../../components/griditem/griditem.vue";
 	export default {
 		components: {
-			griditem
+			griditem,
 		},
 		props: {},
 		data() {
@@ -123,144 +132,166 @@
 				// 滑到底部加载更多
 				offset: 1,
 				noData: false,
-				isAll: false,
+				// isAll: false,
 				total: 0,
 				bannerList: [],
 				checkedIndex: 0,
 				tabList: [],
 				storeList: [],
-				allList: []
-			}
-		},
-		onReady() {
-			uni.setNavigationBarTitle({
-				title: '新的标题'
-			})
-			//这两个值一起使用
-			uni.setNavigationBarColor({
-				frontColor: '#000000', //仅支持 #ffffff 和 #000000
-				backgroundColor: '十六进制颜色',
-			})
+				allList: [],
+			};
 		},
 		onLoad(option) {
-			this.option = option
-			console.log('option', option);
-			this.getList()
+			this.option = option;
+			this.getList();
 		},
+		onReachBottom (){			console.log("onReachBottom")			this.loadmore();		},
 		methods: {
 			click(index) {
-				console.log("index-", index)
 				// 选中文字红色
-				const newList = this.tabList
+				const newList = this.tabList;
 				this.tabList.map((value, i) => {
-					newList[i].checkedStyle = '#181818';
-				})
-				this.tabList = newList
-				this.tabList[index].checkedStyle = '#FF4A52 !important'
-				this.checkedIndex = index
+					newList[i].checkedStyle = "#181818";
+				});
+				this.tabList = newList;
+				this.tabList[index].checkedStyle = "#FF4A52 !important";
+				this.checkedIndex = index;
 			},
 			scrolltolower() {
-				console.log("scrolltolower")
-				this.loadmore()
+				this.loadmore();
 			},
 			getList() {
 				uni.request({
-					url: this.$apiHost + '/front/must-eat',
-					method: 'get',
+					url: this.$apiHost + "/front/must-eat",
+					method: "get",
 					data: {
-						s_channel: 'redtable',
-						s_lang: 'zh-Hans',
+						s_channel: "redtable",
+						s_lang: "zh-Hans",
 						offset: this.offset,
-						...this.option
+						...this.option,
 					},
-					success: res => {
-						this.offset++
+					success: (res) => {
+						this.offset++;
 						if (res.data.data.length < 10) {
-							this.noData = true
+							this.noData = true;
 						}
-						let newBanner = []
+						let newBanner = [];
 						res.data.must_eats.map((item, index) => {
 							if (item.id == this.option.s_must_eat_id) {
-								this.total = item.must_eat_count
+								this.total = item.must_eat_count;
 							}
 							newBanner.push({
 								id: item.id,
 								imgUrl: this.$imageHost + item.must_eat_file_path,
 								name: item.translate_must_eat_name,
 								count: item.must_eat_count,
-							})
-						})
-						this.bannerList = newBanner
-						this.tabList = res.data.locations
-						this.storeListPush(res.data.data)
-					}
-				})
+							});
+						});
+						this.bannerList = newBanner;
+						this.tabList = res.data.locations;
+						this.storeListPush(res.data.data);
+					},
+				});
 			},
 			loadmore() {
 				if (this.noData == true) {
-					console.log("this.noData == true")
-					return
+					return;
 				}
 				uni.request({
-					url: this.$apiHost + '/front/must-eat',
-					method: 'get',
+					url: this.$apiHost + "/front/must-eat",
+					method: "get",
 					data: {
-						s_channel: 'redtable',
-						s_lang: 'zh-Hans',
+						s_channel: "redtable",
+						s_lang: "zh-Hans",
 						offset: this.offset,
-						...this.option
+						...this.option,
 					},
-					success: res => {
-						this.offset++
+					success: (res) => {
+						this.offset++;
 						if (res.data.data.length < 10) {
-							this.noData = true
+							this.noData = true;
 						}
-						this.storeListPush(res.data.data)
-
-					}
-				})
+						this.storeListPush(res.data.data);
+					},
+				});
 			},
 			storeListPush(datas) {
 				datas.map((data, i) => {
-					let img = data.product_image ?? data.store_image
+					let img = data.product_image ?? data.store_image;
 					let currentData = {
+						...data,
 						imgUrl: this.$imageHost + img,
-						region: data.translate_store_location_name2 + '/' + data
-							.translate_store_location_name3,
+						region: data.translate_store_location_name2 +
+							"/" +
+							data.translate_store_location_name3,
 						storeName: data.translate_branch_name ?
-							data.translate_store_name + '(' + data.translate_branch_name + ')' : data
-							.translate_store_name,
+							data.translate_store_name + "(" + data.translate_branch_name + ")" :
+							data.translate_store_name,
 						score: data.rti_star,
 						count: data.show_cnt,
 						menu: data.translate_product_name,
-						price: data.price
-					}
-					if (data.product_sale_status == 'sale') {
-						this.storeList.push(currentData)
+					};
+					if (data.product_sale_status == "sale") {
+						this.storeList.push(currentData);
 					} else {
-						this.allList.push(currentData)
+						this.allList.push(currentData);
 					}
-				})
-				console.log("this.storeList", this.storeList)
+				});
 			},
 			toSpecial(item) {
-				console.log('item', item)
 				uni.redirectTo({
-					url: '/pages/special/index?s_commercial_area_id=' + this.option.s_commercial_area_id +
-						'&s_must_eat_id=' + item['id']
-				})
+					url: "/pages/special/index?s_commercial_area_id=" +
+						this.option.s_commercial_area_id +
+						"&s_must_eat_id=" +
+						item["id"],
+				});
+			},
+			toStore(item) {
+				uni.navigateTo({
+					url: "/pages/store/index?id=" + item.store_id,
+				});
 			},
 			changeLoca(item) {
-				console.log('item', item)
 				uni.redirectTo({
-					url: '/pages/special/index?s_commercial_area_id=' + this.option.s_commercial_area_id +
-						'&s_must_eat_id=' + this.option.s_must_eat_id +
-						'&s_loc1=' + item.cat1 +
-						'&s_loc2=' + item.cat2
-				})
+					url: "/pages/special/index?s_commercial_area_id=" +
+						this.option.s_commercial_area_id +
+						"&s_must_eat_id=" +
+						this.option.s_must_eat_id +
+						"&s_loc1=" +
+						item.cat1 +
+						"&s_loc2=" +
+						item.cat2,
+				});
 			},
-		}
-	}
+			// 收藏
+			collect(item, index, type) {
+				const token = uni.getStorageSync("token");
+				uni.request({
+					url: this.$apiHost + "/front/user/bookmark",
+					method: "POST",
+					data: {
+						product_id: item.product_id,
+						store_id: item.store_id,
+					},
+					header: {
+						Authorization: "Bearer " + token,
+					},
+					success: (res) => {
+						if (res.data.status !== "success") return;
+						if (res.data.data === null) {
+							console.log("取消");
+							if (type === "store") this.storeList[index].is_store_bookmarked = 0;
+							if (type === "product") this.allList[index].is_store_bookmarked = 0;
+							return;
+						}
+						console.log("收藏");
+						if (type === "store") this.storeList[index].is_store_bookmarked = 1;
+						if (type === "product") this.allList[index].is_store_bookmarked = 1;
+					},
+				});
+			},
+		},
+	};
 </script>
 
 <style lang="scss">
@@ -291,7 +322,7 @@
 		justify-content: center;
 
 		&__text {
-			color: #FFFFFF;
+			color: #ffffff;
 			font-size: 12px;
 		}
 	}
@@ -330,16 +361,23 @@
 			position: absolute;
 			top: 0;
 			left: 0;
-			color: #FFFFFF;
+			color: #ffffff;
 			width: 284rpx;
 			height: 244rpx;
 		}
 
 		.place {
-			margin-top: 20rpx;
-			margin-left: 20rpx;
-			font-size: 40rpx;
+			margin-top: 10rpx;
+			margin-left: 10rpx;
+			font-size: 36rpx;
 			font-weight: 400;
+			display: -webkit-box;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+			-webkit-line-clamp: 2;
+			text-overflow: ellipsis;
+			word-wrap: break-word;
+			word-break: break-all;
 		}
 
 		.amount {
@@ -348,15 +386,20 @@
 			font-size: 24rpx;
 			font-weight: 400;
 		}
-	}
 
+		.checked {
+			position: absolute;
+			top: 10rpx;
+			right: 10rpx;
+		}
+	}
 
 	.option {
 		margin-top: 40rpx;
 	}
 
 	.u-grid-item {
-		border: #E8E8E8 solid 2rpx !important;
+		border: #e8e8e8 solid 2rpx !important;
 		padding: 26rpx !important;
 		font-size: 28rpx !important;
 		font-weight: 400 !important;
@@ -375,7 +418,7 @@
 	}
 
 	.active {
-		color: #red;
+		color: red;
 	}
 
 	.h2 {
@@ -390,13 +433,13 @@
 		width: 686rpx;
 		height: 338rpx;
 		border-radius: 8rpx;
-		border: 2rpx solid #E8E8E8;
+		border: 2rpx solid #e8e8e8;
 		display: flex;
 		position: relative;
 	}
 
 	.card image {
-		width: 276rpx;
+		width: 300rpx;
 		height: 336rpx;
 		border-top-left-radius: 8rpx;
 		border-bottom-left-radius: 8rpx;

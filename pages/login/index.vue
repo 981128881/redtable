@@ -1,18 +1,16 @@
 <template>
-	<!-- login view html start -->
 	<view>
 		<view>
 			<view class="header">
-				<!-- <image src="/static/img/public/login-wx.png"></image> -->
+				<image src="/static/logo.png"></image>
 			</view>
 			<view class="content">
-				<view>申请获取以下权限</view>
-				<text>获得你的公开信息(昵称，头像、地区等)</text>
+				<!-- <view>申请获取以下权限</view>
+				<text>获得你的公开信息(昵称，头像等)</text> -->
 			</view>
-			<!-- <button class="bottom" type="primary" withCredentials="true" @tap="login">登录</button> -->
+			<button class="bottom" type="primary" withCredentials="true" @tap="login">一键登录</button>
 		</view>
 	</view>
-	<!-- login view html end -->
 </template>
 
 <script>
@@ -20,11 +18,10 @@
 		data() {
 			return {};
 		},
-		onLoad() {
-			this.login();
-		},
+		onLoad() {},
 		methods: {
 			login() {
+				var url = this.$apiHost + '/wechat/login'
 				uni.login({
 					"provider": "weixin",
 					"onlyAuthorize": true, // 微信登录仅请求授权认证
@@ -32,17 +29,17 @@
 						const {
 							code
 						} = event
-						console.log('code', code)
 						//客户端成功获取授权临时票据（code）,向业务服务器发起登录请求。
 						uni.request({
-							url: 'https://apiv1-dev.redtable.global/wechat/login', //https://redtable.global/wechat/login
+							url: url, //https://redtable.global/wechat/login
 							data: {
 								code: event.code
 							},
 							success: (res) => {
 								console.log('res', res)
 								// 保存token
-								uni.setStorageSync('token',res.rt_api_key)
+								uni.setStorageSync('token',res.data.rt_api_key)
+								uni.navigateBack()
 							}
 						});
 					},
@@ -68,8 +65,8 @@
 	}
 
 	.header image {
-		width: 200rpx;
-		height: 200rpx;
+		width: 362rpx;
+		height: 64rpx;
 	}
 
 	.content {

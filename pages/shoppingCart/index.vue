@@ -30,14 +30,23 @@
             ></u-number-box>
           </div>
           <div class="price">
-            <div class="text">{{ item.quantity * item.price }}</div>
+            <div class="text">
+              {{ (item.quantity * item.price) | unitConverter }}
+            </div>
             <div class="symbol">{{ item.currency }}</div>
           </div>
         </div>
       </li>
     </ul>
-
-    <div class="buy-btn" @click="handleAppend">{{ cartjs.other_product_add }}</div>
+    <div class="buy-btn" @click="handleAppend" v-if="dataList.length">
+      {{ cartjs.other_product_add }}
+    </div>
+    <div class="none-btn" @click="handleAppend" v-else>
+      <h3>{{ cartjs.blank_basket }}</h3>
+      <div style="color: #777777; font-size: 26rpx; margin-top: 8rpx">
+        {{ cartjs.blank_basket_msg }}
+      </div>
+    </div>
     <div
       v-if="dataList.length"
       style="
@@ -50,24 +59,18 @@
         z-index: 88;
       "
     >
-      <u-button color="#FF4A52" custom-style="width: 690rpx;" @click="handleBuy">{{
-        totalAndPrice
-      }}</u-button>
+      <u-button
+        color="#FF4A52"
+        custom-style="width: 690rpx;"
+        @click="handleBuy"
+        >{{ totalAndPrice }}</u-button
+      >
     </div>
     <u-toast ref="uToast"></u-toast>
-    <u-modal
-      :show="showModal"
-      showCancelButton
-      title="提示"
-      content="是否删除当前商品？"
-      @confirm="handleConfirm"
-      @cancel="showModal = false"
-    ></u-modal>
   </div>
 </template>
 
 <script>
-import { log } from "util";
 import { cart as cartjs } from "../../zh-Hans/cart";
 export default {
   data() {
@@ -76,7 +79,6 @@ export default {
       maxNum: 9999,
       dataList: [],
       store: {},
-      showModal: false,
       currentDel: {},
     };
   },
@@ -104,7 +106,6 @@ export default {
       });
     },
     async valChange(value, row) {
-      console.log(row.product_id);
       const data1 = await uni.request({
         url: this.$apiHost + `/front/cart/${row.cart_id}`,
         method: "PUT",
@@ -117,7 +118,7 @@ export default {
       });
       const data2 = await uni.request({
         url: this.$apiHost + `/front/cart/total`,
-        method: "PUT",
+        method: "POST",
         header: {
           Authorization: "Bearer " + uni.getStorageSync("token"),
         },
@@ -125,17 +126,31 @@ export default {
           quantity: value.value,
         },
       });
-      console.log(data1[1].data);
       if (
-        data1[1].data.data.status == "success" &&
-        data2[1].data.data.status == "success"
+        data1[1].data.status == "success" &&
+        data2[1].data.status == "success"
       ) {
-        this.$set(this.dataList);
+        this.getShopCar();
+      } else {
+        uni.showToast({
+          title: "修改失败",
+          icon: "error",
+        });
       }
     },
 
     handleDel(row) {
-      this.showModal = true;
+      uni.showModal({
+        title: "提示",
+        content: "是否删除当前商品？",
+        success: (res) => {
+          if (res.confirm) {
+            this.handleConfirm();
+          } else if (res.cancel) {
+            console.log("用户点击取消");
+          }
+        },
+      });
       this.currentDel = row;
     },
 
@@ -148,7 +163,6 @@ export default {
         },
         success: (res) => {
           if (res.data.status === "success") {
-            this.showModal = false;
             this.$refs.uToast.show({
               type: "success",
               message: "删除成功！",
@@ -159,18 +173,36 @@ export default {
         },
       });
     },
-	handleAppend(){
-		uni.navigateTo({
-			url:`/pages/storeMenu/index?id=${this.store.id}`,
-			
-		})
-	},
-	
-	handleBuy(){
-		uni.navigateTo({
-			url: '/pages/orderNow/index'
-		})
-	}
+    handleAppend() {
+      uni.navigateTo({
+        url: `/pages/storeMenu/index?id=${this.store.id}`,
+      });
+    },
+
+    handleBuy() {
+      uni.navigateTo({
+        url: "/pages/orderNow/index",
+      });
+    },
+    unitConverter(value) {
+      if (!value) return 0;
+      // 获取整数部分
+      const intPart = Math.trunc(value);
+      // 整数部分处理，增加,
+      const intPartFormat = intPart
+        .toString()
+        .replace(/(\d)(?=(?:\d{3})+$)/g, "$1,");
+      // 预定义小数部分
+      let floatPart = "";
+      // 将数值截取为小数部分和整数部分
+      const valueArray = value.toString().split(".");
+      if (valueArray.length === 2 && valueArray[1] > 0) {
+        // 有小数部分
+        floatPart = valueArray[1].toString(); // 取得小数部分
+        return intPartFormat + "." + floatPart;
+      }
+      return intPartFormat + floatPart;
+    },
   },
   computed: {
     totalAndPrice() {
@@ -180,7 +212,9 @@ export default {
       const price = this.dataList.reduce((a, b) => {
         return a + b.price * b.quantity;
       }, 0);
-      return `${num}立即支付(${price} ${this.store.currency})`;
+      return `${num}立即支付(${this.unitConverter(price)} ${
+        this.store && this.store.currency
+      })`;
     },
   },
 };
@@ -300,5 +334,10 @@ ul {
   text-align: center;
   color: #ff4a52;
   text-decoration: underline;
+}
+.none-btn {
+  width: 400rpx;
+  margin: 48rpx auto;
+  text-align: center;
 }
 </style>

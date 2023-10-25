@@ -1,8 +1,8 @@
 <template>
   <div>
-    <navigator class="fixed" open-type="navigateBack">
+    <!-- <navigator class="fixed" open-type="navigateBack">
       <u-icon name="arrow-left" color="#ffffff" size="48"></u-icon>
-    </navigator>
+    </navigator> -->
 
     <div style="padding-bottom: 30rpx" v-if="productImageUrl">
       <u-image width="750rpx" height="600rpx" :src="productImageUrl"></u-image>
@@ -29,7 +29,9 @@
       <div class="title">{{ dataInfo.translate_name }}</div>
       <div class="sub-title">{{ dataInfo.translate_label_name }}</div>
       <div class="price">
-        <div class="text">{{ dataInfo.price }}</div>
+        <div class="text">
+          {{ dataInfo.price | unitConverter }}
+        </div>
         <div class="symbol">{{ store.currency }}</div>
       </div>
       <div class="number-box">
@@ -124,19 +126,33 @@
           </div>
         </div>
       </div>
-      <div class="info-content">
+      <div class="info-content" style="margin-bottom: 120rpx">
         <div class="info-title">
           {{ guide["zh-Hans"].guide21 }}
         </div>
         <div class="info-content-info">{{ guide["zh-Hans"].guide22 }}</div>
       </div>
-
-      <u-button
-        color="#FF4A52"
-        custom-style="width: 690rpx; margin: 30rpx auto;"
-        @click="handleSubmit"
-        >{{ totalAndPrice }}</u-button
+      <view
+        style="
+          background: #fff;
+          padding: 30rpx;
+          position: fixed;
+          left: 0;
+          bottom: 0;
+        "
+        v-if="
+          store.status === 'normal' &&
+          dataInfo.status === 'normal' &&
+          dataInfo.sale_status === 'sale'
+        "
       >
+        <u-button
+          color="#FF4A52"
+          custom-style="width: 690rpx;"
+          @click="handleSubmit"
+          >{{ totalAndPrice }}</u-button
+        >
+      </view>
     </div>
     <u-toast ref="uToast"></u-toast>
     <u-modal
@@ -214,12 +230,18 @@ export default {
     },
 
     async handleSubmit() {
+      const token = uni.getStorageSync("token");
+      if (!token) {
+        uni.navigateTo({ url: "/pages/login/index" });
+        return;
+      }
+
       // 获取购物车是否有商品存在
       const isHasProduction = await uni.request({
         url: this.$apiHost + `/front/cart/total`,
         method: "POST",
         header: {
-          Authorization: "Bearer " + uni.getStorageSync("token"),
+          Authorization: "Bearer " + token,
         },
       });
       if (
@@ -255,6 +277,8 @@ export default {
           Authorization: "Bearer " + uni.getStorageSync("token"),
         },
         data: {
+          // product_id: "22636" || this.productionId,
+          // quantity: 1 || this.value,
           product_id: this.productionId,
           quantity: this.value,
         },
@@ -277,12 +301,31 @@ export default {
     valChange(e) {
       this.value = e.value;
     },
+    unitConverter(value) {
+      if (!value) return 0;
+      // 获取整数部分
+      const intPart = Math.trunc(value);
+      // 整数部分处理，增加,
+      const intPartFormat = intPart
+        .toString()
+        .replace(/(\d)(?=(?:\d{3})+$)/g, "$1,");
+      // 预定义小数部分
+      let floatPart = "";
+      // 将数值截取为小数部分和整数部分
+      const valueArray = value.toString().split(".");
+      if (valueArray.length === 2 && valueArray[1] > 0) {
+        // 有小数部分
+        floatPart = valueArray[1].toString(); // 取得小数部分
+        return intPartFormat + "." + floatPart;
+      }
+      return intPartFormat + floatPart;
+    },
   },
   computed: {
     totalAndPrice() {
       const num = this.value;
       const price = this.value * this.dataInfo.price;
-      return `${num}个(${price} ${this.store.currency})`;
+      return `${num}个(${this.unitConverter(price)} ${this.store.currency})`;
     },
   },
 };

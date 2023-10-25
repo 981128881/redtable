@@ -47,12 +47,14 @@
       custom-style="width: 690rpx; margin: 30rpx auto;"
       >{{ csjs.inquire }}</u-button
     >
+    {{ columns }}
     <u-picker
       :show="show"
-      :columns="columns"
       itemHeight="100"
+      :columns="columns"
+      keyName="label"
       @confirm="onConfirm"
-      @cancel="onClose"
+      @cancel="show = false"
       :defaultIndex="defaultIndex"
     ></u-picker>
   </div>
@@ -95,11 +97,11 @@ export default {
       },
       columns: [
         [
-          csjs["type-order"],
-          csjs["type-pay"],
-          csjs["type-cancel"],
-          csjs["type-voucher"],
-          csjs["type-etc"],
+          { label: csjs["type-order"], id: "order" },
+          { label: csjs["type-pay"], id: "pay" },
+          { label: csjs["type-cancel"], id: "cancel" },
+          { label: csjs["type-voucher"], id: "voucher" },
+          { label: csjs["type-etc"], id: "etc" },
         ],
       ],
       defaultIndex: [0],
@@ -108,7 +110,7 @@ export default {
   },
   methods: {
     onConfirm({ value, indexs }) {
-      this.userInfo.type = value;
+      this.userInfo.type = value[0].label;
       this.$set(this.defaultIndex, 0, indexs);
       this.show = false;
     },
@@ -137,7 +139,7 @@ export default {
                   phone: "",
                   notes: "",
                 };
-                uni.navigateTo({
+                uni.redirectTo({
                   url: `/pages/initiateConsultationTwo/index?id=${res.data.data.id}`,
                 });
               }

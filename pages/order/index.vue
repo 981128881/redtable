@@ -4,19 +4,20 @@
 			<!-- 搜索栏 购物车 -->
 			<u-row justify="space-between" gutter="10">
 				<u-col span="11">
-					<u-search placeholder="" v-model="keyword" shape="square" :clearabled="true" height="80"
-						searchIconColor="#000000" searchIconSize="32rpx" :showAction="false">
+					<u-search placeholder="请输入关键词" shape="square" :clearabled="true" height="80"
+						searchIconColor="#000000" searchIconSize="32rpx" :showAction="false" @search="search()">
 					</u-search>
 				</u-col>
 				<u-col span="1" align="center">
-					<view>
+					<view @click="toLink('/pages/shoppingCart/index')">
 						<u-icon name="shopping-cart" color="#000000" size="40rpx" bold></u-icon>
 					</view>
 				</u-col>
 			</u-row>
 			<!-- 标签栏 -->
 			<view class="tabs-list">
-				<u-tabs :list="tabs" lineColor="#FF4A52" @click="click" :itemStyle="{width:'25%',height:'100rpx'}">
+				<u-tabs :list="tabs" lineColor="#FF4A52" @click="changeTabs()"
+					:itemStyle="{width:'25%',height:'100rpx'}">
 				</u-tabs>
 			</view>
 		</view>
@@ -25,25 +26,29 @@
 			<view class="no-data" v-if="list.length == 0">
 				<image src="/static/info.png"></image>
 				<span>Nothing ordered yet.</span>
-				<u-link href="https://uviewui.com/" text="所有商品" :under-line="true" @click="click2"></u-link>
+				<p class="under-line" @click="toTabBar('/pages/city/index')">所有商品</p>
 			</view>
-			<view class="table" v-for="(item, index) in list" :key="index" v-if="list.length > 0">
-				<view class="item" @click="toInfo(item)">
-					<image :src="item.imgUrl"></image>
-					<view class="item-info">
-						<h2>撒大大餐厅</h2>
-						<p>测试商店预定</p>
-						<p>使用日期2022-09-30 09:00</p>
-						<view class="price">
-							400
-							<span>KRW</span>
+			<u-list @scrolltolower="scrolltolower" height="1200rpx" :preLoadScreen="page * 4">
+				<u-list-item v-for="(item, index) in list" :key="index" v-if="list.length > 0">
+					<!-- <view class="table" v-for="(item, index) in list" :key="index" v-if="list.length > 0"> -->
+					<view class="item" @click="toInfo(item)">
+						<image :src="item.imgUrl"></image>
+						<view class="item-info">
+							<h2>{{item.translate_name}}</h2>
+							<p>{{item.title}}</p>
+							<p>使用日期 {{item.reserved_at}}</p>
+							<view class="price">
+								{{item.order_price}}
+								<span>{{item.currency}}</span>
+							</view>
+							<span class="more">
+								<u-icon name="arrow-right" color="#888888" size="28rpx" bold></u-icon>
+							</span>
 						</view>
-						<span class="more">
-							<u-icon name="arrow-right" color="#888888" size="28rpx" bold></u-icon>
-						</span>
 					</view>
-				</view>
-			</view>
+					<!-- </view> -->
+				</u-list-item>
+			</u-list>
 		</view>
 
 	</view>
@@ -54,48 +59,125 @@
 	export default {
 		data() {
 			return {
-				keyword: '',
+				// 滑到底部加载更多
+				offset: 1,
+				noData: false,
+				tabType: 'wait',
 				tabs: [{
 					name: '待使用',
-					num: 0,
+					type: 'wait',
 				}, {
 					name: '已使用',
-					num: 0,
+					type: 'used',
 				}, {
 					name: '取消订单',
-					num: 0,
+					type: 'cancel',
 				}],
-				list: [
-					{
-						imgurl: 'https://uihmdccdciav16245131.cdn.ntruss.com/data/store/store/231745_AJA9KlHYQPsYiDxQaXg6L2RSwNdhB9R8.jpg?type=w&w=1024&quality=80&extopt=0',
-					},
-					{
-						imgurl: 'https://uihmdccdciav16245131.cdn.ntruss.com/data/store/store/231745_AJA9KlHYQPsYiDxQaXg6L2RSwNdhB9R8.jpg?type=w&w=1024&quality=80&extopt=0',
-					}
-				],
+				list: [],
+				// 待使用
+				waitList: [],
+				// 已使用
+				usedList: [],
+				// 取消
+				cancelList: [],
 			}
 		},
-		onLoad() {
-			this.getList();
+		onLoad() {},
+		onShow: function() {
+			if (uni.getStorageSync('token')) {
+				this.init();
+			}else{
+				uni.navigateTo({
+					url: '/pages/login/index'
+				})
+			}
 		},
 		methods: {
-			// 获取列表数据
-			getList() {
-				// this.$api.getList(this.pageNo, this.pageSize, res => {
-				// 	let data = res.data;
-				// 	this.list.push(...data.list);
-				// 	this.totalPage = data.total;
-				// });
+			init() {
+				this.list = []
+				this.waitList = []
+				this.usedList = []
+				this.cancelList = []
+				this.offset = 1
+				this.noData = false
+				this.loadmore()
+			},
+			scrolltolower() {
+				this.loadmore()
+			},
+			loadmore() {
+				if (this.noData == true) {
+					console.log("this.noData == true")
+					return
+				}
+				const token = uni.getStorageSync('token')
+				// const token = 'xbCXQ7DwwFM0VbrR1BQQpyUIv29yqV7garpzTJJtajVV7bNeImvqnzCayNMNo3Tk'
+				uni.request({
+					url: this.$apiHost + '/front/order',
+					method: 'GET',
+					data: {
+						limit: 50,
+						offset: this.offset,
+					},
+					header: {
+						'Authorization': 'Bearer ' + token
+					},
+					success: res => {
+						this.offset++
+						if (res.data.data.length < 50) {
+							this.noData = true
+						}
+						this.orderListPush(res.data.data)
+					}
+				})
+			},
+			orderListPush(datas) {
+				datas.map((data, i) => {
+					let currentData = {
+						...data,
+						imgUrl: this.$imageHost + data.store_image,
+						dateText: data.status === 'cancel' ? '取消日期' : '使用日期'
+					}
+					if ((data.status === 'paid' || data.status === 'particial_cancel') && data.voucher_status !==
+						'used') {
+						this.waitList.push(currentData)
+					}
+					if (data.voucher_status === 'used') {
+						this.usedList.push(currentData)
+					}
+					if (data.status === 'cancel') {
+						this.cancelList.push(currentData)
+					}
+				})
+				console.log("this.waitList",this.waitList)
+				console.log("this.usedList",this.usedList)
+				console.log("this.cancelList",this.cancelList)
+				this.list = this.tabType == 'wait' ? this.waitList :
+					this.tabType == 'used' ? this.usedList :
+					this.cancelList
+			},
+			changeTabs(item) {
+				this.tabType = item.type
+				this.init()
+			},
+			toTabBar(url) {
+				uni.switchTab({
+					url
+				})
 			},
 			toInfo(item) {
 				uni.navigateTo({
-					url: '/pages/order/info?id=' + 654321
+					url: '/pages/order/info?order_no=' + item.order_no
 				})
 			},
-			click2() {
-				console.log('click2');
+			search(value) {
+				uni.navigateTo({
+					url: '/pages/search/index?keyword=' + value
+				})
 			},
-
+			toLink(url) {
+				uni.navigateTo({ url })
+			},
 		}
 	}
 </script>
@@ -136,11 +218,12 @@
 		margin-top: 32rpx;
 	}
 
-	.u-link {
-		margin-top: 72rpx !important;
-		font-size: 32rpx !important;
-		font-weight: 400 !important;
-		color: #333333 !important;
+	.under-line {
+		margin-top: 72rpx;
+		font-size: 32rpx;
+		font-weight: 400;
+		color: #333333;
+		text-decoration: underline;
 	}
 
 	.item {
@@ -185,7 +268,7 @@
 			padding-left: 10rpx;
 		}
 	}
-	
+
 	.more {
 		position: absolute;
 		top: 0;
